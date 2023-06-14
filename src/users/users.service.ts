@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/createUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { User } from './entities/user.entity';
-import { HashProvider } from '../Utils/hashProvider';
+import { HashProvider } from '../utils/hashProvider';
 
 @Injectable()
 export class UsersService {
