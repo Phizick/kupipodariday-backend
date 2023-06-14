@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/createUser.dto';
@@ -18,31 +22,53 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const hashedPassword = await this._hashPassword(createUserDto.password);
-    const user = await this.usersRepository.create({
-      ...createUserDto,
-      password: hashedPassword,
-    });
+    try {
+      const hashedPassword = await this._hashPassword(createUserDto.password);
+      const user = await this.usersRepository.create({
+        ...createUserDto,
+        password: hashedPassword,
+      });
 
-    return this.usersRepository.save(user);
+      return await this.usersRepository.save(user);
+    } catch (error) {
+      throw new InternalServerErrorException('не удалось создать пользователя');
+    }
   }
 
   async findOne(id: number): Promise<User> {
-    return this.usersRepository.findOneBy({ id });
+    try {
+      const user = await this.usersRepository.findOneBy({ id });
+      if (!user) {
+        throw new NotFoundException(
+          `пользователь с идентификатором ${id} не найден`,
+        );
+      }
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'не удалось получить пользователя',
+      );
+    }
   }
 
   async updateOne(id: number, updateUserDto: UpdateUserDto) {
-    if (updateUserDto.password) {
-      const hashedPassword = await this._hashPassword(updateUserDto.password);
-      return await this.usersRepository.update(
-        { id },
-        {
-          ...updateUserDto,
-          password: hashedPassword,
-        },
+    try {
+      if (updateUserDto.password) {
+        const hashedPassword = await this._hashPassword(updateUserDto.password);
+        return await this.usersRepository.update(
+          { id },
+          {
+            ...updateUserDto,
+            password: hashedPassword,
+          },
+        );
+      } else {
+        return await this.usersRepository.update({ id }, updateUserDto);
+      }
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `нее удалось обновить пользователя с идентификатором ${id}`,
       );
-    } else {
-      return await this.usersRepository.update({ id }, updateUserDto);
     }
   }
 
@@ -51,64 +77,110 @@ export class UsersService {
   }
 
   async findUserByName(username: string) {
-    return await this.usersRepository.findOne({
-      select: {
-        id: true,
-        username: true,
-        password: true,
-      },
-      where: {
-        username,
-      },
-    });
+    try {
+      const user = await this.usersRepository.findOne({
+        select: {
+          id: true,
+          username: true,
+          password: true,
+        },
+        where: {
+          username,
+        },
+      });
+      if (!user) {
+        throw new NotFoundException(`пользователь ${username} не найден`);
+      }
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `не удалось получить пользователя ${username}`,
+      );
+    }
   }
 
   async findUserByAllCredentials(username: string) {
-    return await this.usersRepository.findOne({
+    try {
+      const user = await this.usersRepository.findOne({
+        select: ['id', 'username', 'about', 'avatar', 'createdAt', 'updatedAt'],
+        where: { username },
+      });
+      if (!user) {
+        throw new NotFoundException(`пользователь ${username} не найден`);
+      }
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `не удалось получить пользователя ${username}`,
+      );
+    }
+  }
+
+  async validateJwt(id: number) {
+    return await this.usersRepository.find({
       select: {
         id: true,
         username: true,
-        about: true,
-        avatar: true,
-        createdAt: true,
-        updatedAt: true,
       },
       where: {
-        username: username,
+        id,
       },
     });
+  }
+
+  async findByEmail(email: string) {
+    return await this.usersRepository.findOneBy({ email });
   }
 
   async findAllUsers(query: string) {
-    return await this.usersRepository.find({
-      where: [{ username: query }, { email: query }],
-    });
+    try {
+      return await this.usersRepository.find({
+        where: [{ username: query }, { email: query }],
+      });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `не удалось получить список пользователей.`,
+      );
+    }
   }
 
   async findMyWishes(id: number) {
-    await this.usersRepository.findOneBy({ id });
-    const wishes = await this.usersRepository.find({
-      select: ['wishes'],
-      relations: {
-        wishes: {
-          owner: true,
-          offers: {
-            user: {
-              wishes: true,
-              offers: true,
-              wishlists: {
-                owner: true,
-                items: true,
+    try {
+      const user = await this.usersRepository.findOneBy({ id });
+      if (!user) {
+        throw new NotFoundException(
+          `пользователь с идентификатором ${id} не найден`,
+        );
+      }
+
+      const wishes = await this.usersRepository.find({
+        select: ['wishes'],
+        relations: {
+          wishes: {
+            owner: true,
+            offers: {
+              user: {
+                wishes: true,
+                offers: true,
+                wishlists: {
+                  owner: true,
+                  items: true,
+                },
               },
             },
           },
         },
-      },
-      where: {
-        id: id,
-      },
-    });
-    const wishesArr = wishes.map((item) => item.wishes);
-    return wishesArr[0];
+        where: {
+          id: id,
+        },
+      });
+
+      const wishesArr = wishes.map((item) => item.wishes);
+      return wishesArr[0];
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `не удалось получить список желаний пользователя с идентификатором ${id}`,
+      );
+    }
   }
 }

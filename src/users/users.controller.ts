@@ -77,7 +77,7 @@ export class UsersController {
 
   @UseGuards(JwtGuard)
   @Post('find')
-  async findAllUsers(@Body() body: { query: string }) {
+  async findMany(@Body() body: { query: string }) {
     return await this.usersService.findAllUsers(body.query);
   }
 
