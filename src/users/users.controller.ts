@@ -10,10 +10,10 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { UpdateUserDto } from './dto/updateUser.dto';
-import { JwtGuard } from '../guards/jwt.guard';
-import { User } from './entities/user.entity';
+import {UsersService} from './users.service';
+import {UpdateUserDto} from './dto/updateUser.dto';
+import {JwtGuard} from '../guards/jwt.guard';
+import {User} from './entities/user.entity';
 
 interface UserRequest extends Request {
   user: User;
@@ -32,13 +32,7 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @Get(':username')
   async getUserByAllCredentials(@Param() params: { username: string }) {
-    const user = await this.usersService.findUserByAllCredentials(
-      params.username,
-    );
-    if (!user) {
-      throw new NotFoundException('пользователь не найден');
-    }
-    return user;
+    return await this.usersService.findUserByAllCredentials(params.username);
   }
 
   @UseGuards(JwtGuard)
@@ -51,11 +45,7 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @Get('me/:username')
   async getUserByName(@Param() params: { username: string }) {
-    const user = await this.usersService.findUserByName(params.username);
-    if (!user) {
-      throw new NotFoundException('пользователь не найден');
-    }
-    return user;
+    return await this.usersService.findUserByName(params.username);
   }
 
   @UseGuards(JwtGuard)
@@ -87,9 +77,6 @@ export class UsersController {
     const user = await this.usersService.findUserByAllCredentials(
       params.username,
     );
-    if (!user) {
-      throw new NotFoundException('пользователь не найден');
-    }
     return await this.usersService.findMyWishes(user.id);
   }
 }
