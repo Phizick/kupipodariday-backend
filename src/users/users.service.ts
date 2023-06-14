@@ -49,4 +49,66 @@ export class UsersService {
   async removeOne(id: number): Promise<void> {
     await this.usersRepository.delete({ id });
   }
+
+  async findUserByName(username: string) {
+    return await this.usersRepository.findOne({
+      select: {
+        id: true,
+        username: true,
+        password: true,
+      },
+      where: {
+        username,
+      },
+    });
+  }
+
+  async findUserByAllCredentials(username: string) {
+    return await this.usersRepository.findOne({
+      select: {
+        id: true,
+        username: true,
+        about: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      where: {
+        username: username,
+      },
+    });
+  }
+
+  async findAllUsers(query: string) {
+    return await this.usersRepository.find({
+      where: [{ username: query }, { email: query }],
+    });
+  }
+
+  async findMyWishes(id: number) {
+    await this.usersRepository.findOneBy({ id });
+    const wishes = await this.usersRepository.find({
+      select: ['wishes'],
+      relations: {
+        wishes: {
+          owner: true,
+          offers: {
+            user: {
+              wishes: true,
+              offers: true,
+              wishlists: {
+                owner: true,
+                items: true,
+              },
+            },
+          },
+        },
+      },
+      where: {
+        id: id,
+      },
+    });
+    const wishesArr = wishes.map((item) => item.wishes);
+    return wishesArr[0];
+  }
 }
