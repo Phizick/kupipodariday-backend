@@ -9,7 +9,7 @@ export class EmailSenderService {
     private readonly configService: ConfigService,
   ) {}
 
-  async sendEmail(email: string, html: string) {
+  async sendEmail(email: string[], html: string) {
     try {
       return await this.mailerService.sendMail({
         to: email,
