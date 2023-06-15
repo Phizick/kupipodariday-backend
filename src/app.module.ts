@@ -5,7 +5,22 @@ import { User } from './users/entities/user.entity';
 import { Wish } from './wishes/entities/wish.entity';
 import { Wishlist } from './wishlists/entities/wishlist.entity';
 import { Offer } from './offers/entities/offer.entity';
+import { WishesModule } from './wishes/wishes.module';
+import { UsersModule } from './users/users.module';
+import { WishlistsModule } from './wishlists/wishlists.module';
+import { OffersModule } from './offers/offers.module';
+import { AuthModule } from './auth/auth.module';
+import { EmailSenderModule } from './emailSender/emailSender.module';
 
+const entities = [User, Wish, Wishlist, Offer];
+const modules = [
+  WishesModule,
+  UsersModule,
+  WishlistsModule,
+  OffersModule,
+  AuthModule,
+  EmailSenderModule,
+];
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -17,12 +32,13 @@ import { Offer } from './offers/entities/offer.entity';
         username: configService.get('DATABASE_USERNAME'),
         password: configService.get('DATABASE_PASSWORD'),
         database: configService.get('DATABASE_NAME'),
-        entities: [User, Wish, Wishlist, Offer],
+        entities,
         synchronize: true,
       }),
       inject: [ConfigService],
     }),
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({ isGlobal: true }),
+    ...modules,
   ],
 })
 export class AppModule {}

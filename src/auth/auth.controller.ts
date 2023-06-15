@@ -1,17 +1,16 @@
 import {
-  Body,
   Controller,
-  HttpCode,
   Post,
-  Req,
   UseGuards,
+  Req,
+  Body,
+  HttpCode,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from '../users/dto/createUser.dto';
-import { Public } from '../decorators/public';
-import { User } from '../users/entities/user.entity';
 import { LocalGuard } from '../guards/local.guard';
+import { CreateUserDto } from '../users/dto/createUser.dto';
+import { User } from '../users/entities/user.entity';
 
 interface UserRequest extends Request {
   user: User;
@@ -20,22 +19,20 @@ interface UserRequest extends Request {
 @Controller()
 export class AuthController {
   constructor(
-    private readonly usersService: UsersService,
-    private readonly authService: AuthService,
+      private usersService: UsersService,
+      private authService: AuthService,
   ) {}
 
   @HttpCode(200)
   @UseGuards(LocalGuard)
-  @Post('/signin')
-  @Public()
-  async signin(@Req() req: UserRequest): Promise<{ access_token: string }> {
+  @Post('signin')
+  async signin(@Req() req: UserRequest) {
     const { user } = req;
     return this.authService.auth(user);
   }
 
-  @Post('/signup')
-  @Public()
-  async signup(@Body() createUserDto: CreateUserDto): Promise<any | undefined> {
+  @Post('signup')
+  async signup(@Body() createUserDto: CreateUserDto) {
     return await this.usersService.create(createUserDto);
   }
 }

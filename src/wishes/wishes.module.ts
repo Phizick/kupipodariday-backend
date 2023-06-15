@@ -15,7 +15,7 @@ import { UsersModule } from '../users/users.module';
 export class WishesModule {
   constructor(private readonly configService: ConfigService) {
     const entities = this.configService.get<string[]>('database.entities');
-    if (!entities.includes(Wish.name)) {
+    if (!Array.isArray(entities) || !entities.includes(Wish.name)) {
       console.error('ошибка при импорте: не найдено в опциях модуля');
     }
   }

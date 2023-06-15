@@ -2,18 +2,9 @@ import * as bcrypt from 'bcrypt';
 
 export class HashProvider {
   static async generateHash(password: string): Promise<string> {
-    const salt = await bcrypt.genSalt(8);
-    return bcrypt.hash(password, salt);
+    return bcrypt.hash(password, 10);
   }
-
-  static async validatePassword(
-    password: string,
-    hash: string,
-  ): Promise<boolean> {
-    if (typeof password !== 'string' || typeof hash !== 'string') {
-      return false;
-    }
-
-    return await bcrypt.compare(password, hash);
+  static async validateHash(password: string, hash: string): Promise<boolean> {
+    return bcrypt.compare(password, hash);
   }
 }

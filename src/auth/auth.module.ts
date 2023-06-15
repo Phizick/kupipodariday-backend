@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
-import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
@@ -15,8 +15,12 @@ import { AuthController } from './auth.controller';
     ConfigModule.forRoot(),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) =>
-        jwtModuleOptions(configService),
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get('JWT_KEY'),
+        signOptions: {
+          expiresIn: `${configService.get('JWT_EXPIRATION_TIME')}s`,
+        },
+      }),
       inject: [ConfigService],
     }),
   ],
@@ -25,17 +29,3 @@ import { AuthController } from './auth.controller';
   exports: [AuthService],
 })
 export class AuthModule {}
-
-const jwtModuleOptions = (configService: ConfigService): JwtModuleOptions => {
-  const jwtSecret = configService.get<string>('JWT_SECRET') || 'default-secret';
-  const jwtExpiresIn = Math.floor(
-    configService.get<number>('JWT_EXPIRES_IN') || 3600,
-  );
-
-  return {
-    secret: jwtSecret,
-    signOptions: {
-      expiresIn: jwtExpiresIn,
-    },
-  };
-};

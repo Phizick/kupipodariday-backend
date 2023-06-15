@@ -3,33 +3,31 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
-import { HashProvider } from '../utils/hashProvider';
+import { HashProvider } from '../utils/hashProvider'
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly jwtService: JwtService,
-    private readonly usersService: UsersService,
-    private readonly configService: ConfigService,
+      private jwtService: JwtService,
+      private usersService: UsersService,
+      private readonly configService: ConfigService,
   ) {}
 
-  async auth(user: User) {
+  auth(user: User) {
     const payload = { sub: user.id };
     const secret = this.configService.get('JWT_KEY');
-    const access_token = await this.jwtService.signAsync(payload, { secret });
-    return { access_token };
+    return { access_token: this.jwtService.sign(payload, { secret }) };
   }
 
   async validatePassword(username: string, password: string) {
     const user = await this.usersService.findUserByName(username);
-    if (!user) return null;
-
-    const isPasswordMatching = await HashProvider.validatePassword(
-      password,
-      user.password,
+    const isPasswordMatching = await HashProvider.validateHash(
+        password,
+        user.password,
     );
-
-    if (isPasswordMatching) return user;
+    if (user && isPasswordMatching) {
+      return user;
+    }
     return null;
   }
 }

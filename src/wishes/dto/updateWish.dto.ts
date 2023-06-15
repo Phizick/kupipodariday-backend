@@ -1,28 +1,29 @@
 import { PartialType } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber, Min, IsUrl } from 'class-validator';
+import { IsOptional, Length, IsNumber, IsInt, IsUrl } from 'class-validator';
 import { CreateWishDto } from './createWish.dto';
 
 export class UpdateWishDto extends PartialType(CreateWishDto) {
   @IsOptional()
-  @IsString()
-  name?: string;
+  @Length(1, 250)
+  name: string;
 
   @IsOptional()
-  @IsString()
   @IsUrl()
-  link?: string;
+  link: string;
 
   @IsOptional()
-  @IsString()
   @IsUrl()
-  image?: string;
+  image: string;
 
   @IsOptional()
   @IsNumber()
-  @Min(1)
-  price?: number;
+  price: number;
 
   @IsOptional()
-  @IsString()
-  description?: string;
+  @Length(1, 1024)
+  description: string;
+
+  @IsOptional()
+  @IsInt()
+  raised: number;
 }

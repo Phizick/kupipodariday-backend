@@ -1,87 +1,122 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
+  InternalServerErrorException,
   Param,
   Patch,
   Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { JwtGuard } from '../guards/jwt.guard';
 import { WishesService } from './wishes.service';
-import { UsersService } from '../users/users.service';
 import { CreateWishDto } from './dto/createWish.dto';
 import { UpdateWishDto } from './dto/updateWish.dto';
-import { User } from '../users/entities/user.entity';
-
-interface UserRequest extends Request {
-  user: User;
-}
+import { Wish } from './entities/wish.entity';
+import { JwtGuard } from '../guards/Jwt.guard';
 
 @Controller('wishes')
 export class WishesController {
-  constructor(
-    private readonly wishesService: WishesService,
-    private readonly usersService: UsersService,
-  ) {}
+  constructor(private wishesService: WishesService) {}
 
-  @UseGuards(JwtGuard)
-  @Post()
-  async create(@Req() req: UserRequest, @Body() createWishDto: CreateWishDto) {
-    const user = await this.usersService.findOne(req.user.id);
-    return await this.wishesService.create(createWishDto, user);
+  @Get('top')
+  async getTopWishes(): Promise<Wish[]> {
+    try {
+      return await this.wishesService.findTopWishes();
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException(
+        'не удаётся получить лучшие карточки',
+      );
+    }
   }
 
   @Get('last')
-  async findLast() {
-    return await this.wishesService.findMany();
-  }
-
-  @Get('top')
-  async findTop() {
-    return await this.wishesService.findTop();
-  }
-
-  @UseGuards(JwtGuard)
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return await this.wishesService.findOne(+id);
-  }
-
-  @UseGuards(JwtGuard)
-  @Patch(':id')
-  async update(
-    @Req() req: UserRequest,
-    @Param('id') id: string,
-    @Body() updateWishDto: UpdateWishDto,
-  ) {
-    const user = await this.usersService.findOne(req.user.id);
-    const wish = await this.wishesService.findOne(+id);
-
-    if (wish.offers.length !== 0) {
-      throw new BadRequestException(
-        'нельзя изменять стоимость подарка, когда есть желающие скинуться',
+  async getLastWishes(): Promise<Wish[]> {
+    try {
+      return await this.wishesService.findLastWishes();
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException(
+        'не удаётся получить последние карточки',
       );
     }
-    return this.wishesService.update(+id, updateWishDto, user);
+  }
+
+  @Get(':id')
+  async getOneWish(@Param('id') id: number): Promise<Wish> {
+    try {
+      return await this.wishesService.findOne(id);
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException(
+        `не удается получить карточку с указанным id: ${id}`,
+      );
+    }
   }
 
   @UseGuards(JwtGuard)
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
-    const wish = await this.wishesService.findOne(+id);
-    await this.wishesService.remove(+id);
-    return wish;
+  @Post()
+  async createWish(
+    @Req() req,
+    @Body() createWishDto: CreateWishDto,
+  ): Promise<Wish> {
+    try {
+      const owner = req.user;
+      return await this.wishesService.create(owner, createWishDto);
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException(
+        'при созданиии карточки произошла ошибка',
+      );
+    }
   }
 
   @UseGuards(JwtGuard)
   @Post(':id/copy')
-  async copy(@Param('id') id: string, @Req() req: UserRequest) {
-    const user = await this.usersService.findOne(req.user.id);
-    await this.wishesService.findOne(+id);
-    return this.wishesService.copy(+id, user);
+  async copyWish(
+    @Param('id') id: number,
+    @Req() req,
+  ): Promise<NonNullable<unknown>> {
+    try {
+      const owner = req.user;
+      return await this.wishesService.copyWish(id, owner);
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException('не удаётся скопировать карточку');
+    }
+  }
+
+  @UseGuards(JwtGuard)
+  @Patch(':id')
+  async updateOne(
+    @Req() req,
+    @Param('id') id: number,
+    @Body() updateWishDto: UpdateWishDto,
+  ): Promise<NonNullable<unknown>> {
+    try {
+      const userId = req.user.id;
+      return await this.wishesService.updateOne(id, updateWishDto, userId);
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException('не удаётся обновить карточку');
+    }
+  }
+
+  @UseGuards(JwtGuard)
+  @Delete(':id')
+  async remove(
+    @Req() req,
+    @Param('id') id: number,
+  ): Promise<{ message: string }> {
+    try {
+      const userId = req.user.id;
+      await this.wishesService.remove(id, userId);
+      return { message: `карточка с id: ${id} успешно удалена` };
+    } catch (error) {
+      console.log(error);
+      throw new InternalServerErrorException('не удаётся удалить карточку');
+    }
   }
 }
