@@ -74,6 +74,22 @@ export class WishesService {
     }
   }
 
+  async findWishes(wishes: number[]): Promise<Wish[]> {
+    try {
+      const foundWishes = await this.wishesRepository.find({
+        where: { id: Any(wishes) },
+      });
+      if (!foundWishes || foundWishes.length === 0) {
+        throw new NotFoundException('подарки не найдены');
+      }
+      return foundWishes;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `не удалось получить список подарков`,
+      );
+    }
+  }
+
   async findOne(id: number): Promise<Wish> {
     try {
       const wish = await this.wishesRepository.findOne({
