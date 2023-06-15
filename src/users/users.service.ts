@@ -31,6 +31,7 @@ export class UsersService {
 
       return await this.usersRepository.save(user);
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException('не удалось создать пользователя');
     }
   }
@@ -45,6 +46,7 @@ export class UsersService {
       }
       return user;
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(
         'не удалось получить пользователя',
       );
@@ -66,6 +68,7 @@ export class UsersService {
         return await this.usersRepository.update({ id }, updateUserDto);
       }
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(
         `нее удалось обновить пользователя с идентификатором ${id}`,
       );
@@ -93,6 +96,7 @@ export class UsersService {
       }
       return user;
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(
         `не удалось получить пользователя ${username}`,
       );
@@ -110,6 +114,7 @@ export class UsersService {
       }
       return user;
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(
         `не удалось получить пользователя ${username}`,
       );
@@ -138,6 +143,7 @@ export class UsersService {
         where: [{ username: query }, { email: query }],
       });
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(
         `не удалось получить список пользователей.`,
       );
@@ -178,6 +184,7 @@ export class UsersService {
       const wishesArr = wishes.map((item) => item.wishes);
       return wishesArr[0];
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(
         `не удалось получить список желаний пользователя с идентификатором ${id}`,
       );

@@ -31,6 +31,7 @@ export class WishesService {
       }
       return savedWish;
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(`не удалось создать подарок`);
     }
   }
@@ -47,6 +48,7 @@ export class WishesService {
       }
       return wishes;
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(
         `не удалось получить список подарков`,
       );
@@ -65,27 +67,12 @@ export class WishesService {
       }
       return wishes;
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(
         `не удалось получить топ подарков`,
       );
     }
   }
-
-  // async findWishes(wishes: number[]): Promise<Wish[]> {
-  //   try {
-  //     const foundWishes = await this.wishesRepository.find({
-  //       where: { id: Any(wishes) },
-  //     });
-  //     if (!foundWishes || foundWishes.length === 0) {
-  //       throw new NotFoundException('подарки не найдены');
-  //     }
-  //     return foundWishes;
-  //   } catch (error) {
-  //     throw new InternalServerErrorException(
-  //       `не удалось получить список подарков`,
-  //     );
-  //   }
-  // }
 
   async findOne(id: number): Promise<Wish> {
     try {
@@ -110,6 +97,7 @@ export class WishesService {
       }
       return wish;
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(
         `не удалось получить подарок с идентификатором ${id}`,
       );
@@ -170,6 +158,7 @@ export class WishesService {
 
       return savedCopyWish;
     } catch (error) {
+      console.error(error);
       throw new Error(
         `не удалось скопировать подарок  ${id}. причина: ${error.message}`,
       );
@@ -187,6 +176,7 @@ export class WishesService {
         raised: raised + sum,
       });
     } catch (error) {
+      console.error(error);
       throw new Error(`не удалось обновить ${id}. причина: ${error.message}`);
     }
   }

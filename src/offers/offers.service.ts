@@ -2,6 +2,7 @@ import {
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -46,15 +47,45 @@ export class OffersService {
 
       if (sum === wish.price) {
         const usersEmail = wish.offers.map(({ user }) => user.email);
-        const message = 'Подарок собран!';
+        const message = 'подарок собран!';
         await this.emailSenderService.sendEmail(usersEmail, message);
       }
 
       return offer;
     } catch (error) {
+      console.error(error);
       throw new InternalServerErrorException(
-        `ошибка при создании записи: ${error.message}`,
+        `ошибка при создании заявки: ${error.message}`,
       );
+    }
+  }
+
+  async findOne(id: number): Promise<Offer> {
+    const offer = await this.offerRepository.findOneBy({ id });
+    if (!offer) {
+      throw new NotFoundException(`не удалось найти заявку с id: ${id}`);
+    }
+    return offer;
+  }
+
+  async findOffers(): Promise<Offer[]> {
+    try {
+      return this.offerRepository.find({
+        relations: {
+          item: {
+            owner: true,
+            offers: true,
+          },
+          user: {
+            wishes: true,
+            wishlists: true,
+            offers: true,
+          },
+        },
+      });
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('не удалось получить все офферы');
     }
   }
 }
