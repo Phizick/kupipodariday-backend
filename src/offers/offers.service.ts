@@ -41,7 +41,7 @@ export class OffersService {
         throw new ForbiddenException('нужная сумма уже собрана');
       }
 
-      await this.wishesService.updateByRised(createOfferDto.itemId, sum);
+      await this.wishesService.updateByRise(createOfferDto.itemId, sum);
       const offerDto = { ...createOfferDto, user: user, item: wish };
       const offer = await this.offerRepository.save(offerDto);
 

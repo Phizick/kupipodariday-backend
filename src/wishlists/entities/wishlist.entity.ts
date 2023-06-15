@@ -8,21 +8,13 @@ import {
   ManyToOne,
   JoinTable,
 } from 'typeorm';
-import {
-  MinLength,
-  MaxLength,
-  IsInt,
-  IsString,
-  IsDate,
-  IsUrl,
-} from 'class-validator';
+import { IsDate, IsUrl, Length, IsOptional } from 'class-validator';
 import { User } from '../../users/entities/user.entity';
 import { Wish } from '../../wishes/entities/wish.entity';
 
 @Entity()
 export class Wishlist {
   @PrimaryGeneratedColumn()
-  @IsInt()
   id: number;
 
   @CreateDateColumn()
@@ -33,40 +25,19 @@ export class Wishlist {
   @IsDate()
   updatedAt: Date;
 
-  @Column({
-    type: 'varchar',
-    unique: true,
-  })
-  @IsString()
-  @MinLength(1, {
-    message: 'название списка не может быть короче 1 символа',
-  })
-  @MaxLength(250, {
-    message: 'название списка не может быть длиннее 250 символов',
-  })
+  @Column()
+  @Length(1, 250)
   name: string;
-
-  @Column({
-    type: 'varchar',
-    default: '',
-  })
-  @IsString()
-  @MinLength(1, {
-    message: 'описание списка не может быть короче 1 символа',
-  })
-  @MaxLength(1500, {
-    message: 'описание списка не может быть длиннее 1500 символов',
-  })
-  description: string;
 
   @Column()
   @IsUrl()
   image: string;
 
-  @ManyToMany(() => Wish, (wish) => wish.wishlists)
+  @ManyToMany(() => Wish, (wish) => wish.name)
   @JoinTable()
+  @IsOptional()
   items: Wish[];
 
-  @ManyToOne(() => User, (user) => user.wishlists)
+  @ManyToOne(() => User, (user) => user.wishlists, { onDelete: 'CASCADE' })
   owner: User;
 }
