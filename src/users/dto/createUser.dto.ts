@@ -1,35 +1,32 @@
 import {
-  IsString,
+  Length,
   IsNotEmpty,
-  MinLength,
-  MaxLength,
   IsEmail,
   IsUrl,
   IsOptional,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateUserDto {
-  @IsString()
-  @IsNotEmpty()
-  @MinLength(1)
-  @MaxLength(64)
+  @Length(2, 30)
+  @Transform(({ value }) => value?.trim())
   username: string;
 
-  @IsString()
   @IsOptional()
-  @MaxLength(200)
-  about?: string;
+  @Length(2, 200)
+  @Transform(({ value }) => value?.trim())
+  about: string;
 
-  @IsUrl()
   @IsOptional()
-  avatar?: string;
+  @IsUrl()
+  @Transform(({ value }) => value || 'https://i.pravatar.cc/300')
+  avatar: string;
 
   @IsEmail()
-  @IsNotEmpty()
+  @Transform(({ value }) => value?.trim())
   email: string;
 
-  @IsString()
   @IsNotEmpty()
-  @MinLength(2)
+  @Transform(({ value }) => value?.trim())
   password: string;
 }

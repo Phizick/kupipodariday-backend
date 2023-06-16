@@ -10,7 +10,6 @@ import { User } from '../users/entities/user.entity';
 import { Offer } from './entities/offer.entity';
 import { CreateOfferDto } from './dto/createOffer.dto';
 import { WishesService } from '../wishes/wishes.service';
-import { EmailSenderService } from '../emailSender/emailSender.service';
 
 @Injectable()
 export class OffersService {
@@ -18,7 +17,6 @@ export class OffersService {
     @InjectRepository(Offer)
     private readonly offerRepository: Repository<Offer>,
     private readonly wishesService: WishesService,
-    private readonly emailSenderService: EmailSenderService,
   ) {}
 
   async create(createOfferDto: CreateOfferDto, user: User) {
@@ -44,12 +42,6 @@ export class OffersService {
       await this.wishesService.updateByRise(createOfferDto.itemId, sum);
       const offerDto = { ...createOfferDto, user: user, item: wish };
       const offer = await this.offerRepository.save(offerDto);
-
-      if (sum === wish.price) {
-        const usersEmail = wish.offers.map(({ user }) => user.email);
-        const message = 'подарок собран!';
-        await this.emailSenderService.sendEmail(usersEmail, message);
-      }
 
       return offer;
     } catch (error) {

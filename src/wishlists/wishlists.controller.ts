@@ -45,7 +45,7 @@ export class WishlistsController {
       return await this.wishlistsService.findOne(id);
     } catch (error) {
       console.log(error);
-      throw new NotFoundException('коллекция не найден');
+      throw new NotFoundException('коллекция не найдена');
     }
   }
 

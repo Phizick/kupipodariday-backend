@@ -31,9 +31,9 @@ export class UpdateWishlistDto extends PartialType(CreateWishlistDto) {
   itemsId: number[];
 
   @IsOptional()
-  @Length(10, 500, {
+  @Length(10, 1500, {
     message:
-      'максимальная длина описания составляет 500 символов, минимальная - 10',
+      'максимальная длина описания составляет 1500 символов, минимальная - 10',
   })
   description: string;
 }

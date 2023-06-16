@@ -10,7 +10,6 @@ import { UsersModule } from './users/users.module';
 import { WishlistsModule } from './wishlists/wishlists.module';
 import { OffersModule } from './offers/offers.module';
 import { AuthModule } from './auth/auth.module';
-import { EmailSenderModule } from './emailSender/emailSender.module';
 
 const entities = [User, Wish, Wishlist, Offer];
 const modules = [
@@ -19,7 +18,6 @@ const modules = [
   WishlistsModule,
   OffersModule,
   AuthModule,
-  EmailSenderModule,
 ];
 @Module({
   imports: [

@@ -1,36 +1,37 @@
 import { PartialType } from '@nestjs/swagger';
 import {
-  IsString,
-  MinLength,
-  MaxLength,
+  Length,
   IsEmail,
   IsUrl,
   IsOptional,
+  IsNotEmpty,
 } from 'class-validator';
 import { CreateUserDto } from './createUser.dto';
+import { Transform } from 'class-transformer';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
-  @IsString()
-  @MinLength(1)
-  @MaxLength(64)
-  username?: string;
+  @Length(2, 30)
+  @Transform(({ value }) => value?.trim())
+  username: string;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(200)
-  about?: string;
+  @Length(2, 200)
+  @Transform(({ value }) => value?.trim())
+  about: string;
 
   @IsOptional()
   @IsUrl()
-  avatar?: string;
+  @Transform(({ value }) => value?.trim())
+  avatar: string;
 
   @IsOptional()
   @IsEmail()
-  email?: string;
+  @Transform(({ value }) => value?.trim())
+  email: string;
 
   @IsOptional()
-  @IsString()
-  @MinLength(2)
-  password?: string;
+  @IsNotEmpty()
+  @Transform(({ value }) => value?.trim())
+  password: string;
 }
