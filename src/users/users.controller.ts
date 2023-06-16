@@ -7,13 +7,13 @@ import {
   Patch,
   Post,
   Req,
-  UnauthorizedException,
+  ForbiddenException,
   UseGuards,
 } from '@nestjs/common';
-import {UsersService} from './users.service';
-import {UpdateUserDto} from './dto/updateUser.dto';
-import {JwtGuard} from '../guards/jwt.guard';
-import {User} from './entities/user.entity';
+import { UsersService } from './users.service';
+import { UpdateUserDto } from './dto/updateUser.dto';
+import { JwtGuard } from '../guards/jwt.guard';
+import { User } from './entities/user.entity';
 
 interface UserRequest extends Request {
   user: User;
@@ -26,26 +26,12 @@ export class UsersController {
   @UseGuards(JwtGuard)
   @Get('me')
   me(@Req() req: UserRequest) {
-    return this.usersService.findOne(req.user.id);
-  }
-
-  @UseGuards(JwtGuard)
-  @Get(':username')
-  async getUserByAllCredentials(@Param() params: { username: string }) {
-    return await this.usersService.findUserByAllCredentials(params.username);
-  }
-
-  @UseGuards(JwtGuard)
-  @Get('me/wishes')
-  async getMyWishes(@Req() req: UserRequest) {
-    const { id } = req.user;
-    return await this.usersService.findMyWishes(id);
-  }
-
-  @UseGuards(JwtGuard)
-  @Get('me/:username')
-  async getUserByName(@Param() params: { username: string }) {
-    return await this.usersService.findUserByName(params.username);
+    try {
+      return this.usersService.findOne(req.user.id);
+    } catch (error) {
+      console.error(error);
+      throw new NotFoundException('пользователь не найден');
+    }
   }
 
   @UseGuards(JwtGuard)
@@ -56,7 +42,7 @@ export class UsersController {
   ) {
     const user = this.usersService.findOne(req.user.id);
     if (!user) {
-      throw new UnauthorizedException(
+      throw new ForbiddenException(
         'вы можете редактировать только свой профиль',
       );
     }
@@ -66,17 +52,50 @@ export class UsersController {
   }
 
   @UseGuards(JwtGuard)
-  @Post('find')
-  async findMany(@Body() body: { query: string }) {
-    return await this.usersService.findAllUsers(body.query);
+  @Get('me/wishes')
+  async getMyWishes(@Req() req: UserRequest) {
+    const { id } = req.user;
+    try {
+      return await this.usersService.findMyWishes(id);
+    } catch (error) {
+      console.error(error);
+      throw new NotFoundException('карточки пользователя не найдены');
+    }
+  }
+
+  @UseGuards(JwtGuard)
+  @Get(':username')
+  async getUserByAllCredentials(@Param() params: { username: string }) {
+    try {
+      return await this.usersService.findUserByAllCredentials(params.username);
+    } catch (error) {
+      console.error(error);
+      throw new NotFoundException('пользователь не найден');
+    }
   }
 
   @UseGuards(JwtGuard)
   @Get(':username/wishes')
   async getUsersWishes(@Param() params: { username: string }) {
-    const user = await this.usersService.findUserByAllCredentials(
-      params.username,
-    );
-    return await this.usersService.findMyWishes(user.id);
+    try {
+      const user = await this.usersService.findUserByAllCredentials(
+        params.username,
+      );
+      return await this.usersService.findMyWishes(user.id);
+    } catch (error) {
+      console.error(error);
+      throw new NotFoundException('карточки пользователя не найдены');
+    }
+  }
+
+  @UseGuards(JwtGuard)
+  @Post('find')
+  async findMany(@Body() body: { query: string }) {
+    try {
+      return await this.usersService.findAllUsers(body.query);
+    } catch (error) {
+      console.error(error);
+      throw new NotFoundException('пользователи не найдены');
+    }
   }
 }

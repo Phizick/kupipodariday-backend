@@ -52,7 +52,7 @@ export class WishesService {
         where: {
           copied: MoreThan(0),
         },
-        take: 20,
+        take: 10,
       });
     } catch (error) {
       console.error(error);
@@ -81,22 +81,6 @@ export class WishesService {
       console.error(error);
       throw new NotFoundException('не удаётся получить карточку');
     }
-  }
-
-  findUserWishes(userId: number) {
-    return this.wishesRepository.find({
-      where: { owner: { id: userId } },
-      relations: {
-        owner: {
-          wishes: true,
-          wishlists: true,
-        },
-        offers: {
-          user: true,
-          item: true,
-        },
-      },
-    });
   }
 
   async updateOne(wishId: number, updatedWish: UpdateWishDto, userId: number) {

@@ -14,7 +14,7 @@ import { WishesService } from './wishes.service';
 import { CreateWishDto } from './dto/createWish.dto';
 import { UpdateWishDto } from './dto/updateWish.dto';
 import { Wish } from './entities/wish.entity';
-import { JwtGuard } from '../guards/Jwt.guard';
+import { JwtGuard } from '../guards/jwt.guard';
 
 @Controller('wishes')
 export class WishesController {

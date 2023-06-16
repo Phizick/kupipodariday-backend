@@ -2,6 +2,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,18 +18,22 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
   ) {}
 
-  private async _hashPassword(password: string) {
-    return await HashProvider.generateHash(password);
-  }
-
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
-      const hashedPassword = await this._hashPassword(createUserDto.password);
-      const user = await this.usersRepository.create({
-        ...createUserDto,
-        password: hashedPassword,
-      });
-
+      const username = await this.findUserByName(createUserDto.username);
+      const email = await this.findByEmail(createUserDto.email);
+      if (username !== null) {
+        throw new ForbiddenException(
+          'пользователь с таким именем уже существует, придумайте другое',
+        );
+      }
+      if (email) {
+        throw new ForbiddenException(
+          'пользователь с таким e-mail уже существует, используйте другой',
+        );
+      }
+      const user = this.usersRepository.create(createUserDto);
+      user.password = await HashProvider.generateHash(user.password);
       return await this.usersRepository.save(user);
     } catch (error) {
       console.error(error);
@@ -56,7 +61,9 @@ export class UsersService {
   async updateOne(id: number, updateUserDto: UpdateUserDto) {
     try {
       if (updateUserDto.password) {
-        const hashedPassword = await this._hashPassword(updateUserDto.password);
+        const hashedPassword = await HashProvider.generateHash(
+          updateUserDto.password,
+        );
         return await this.usersRepository.update(
           { id },
           {
@@ -75,32 +82,12 @@ export class UsersService {
     }
   }
 
-  async removeOne(id: number): Promise<void> {
-    await this.usersRepository.delete({ id });
-  }
-
   async findUserByName(username: string) {
-    try {
-      const user = await this.usersRepository.findOne({
-        select: {
-          id: true,
-          username: true,
-          password: true,
-        },
-        where: {
-          username,
-        },
-      });
-      if (!user) {
-        throw new NotFoundException(`пользователь ${username} не найден`);
-      }
-      return user;
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException(
-        `не удалось получить пользователя ${username}`,
-      );
-    }
+    return await this.usersRepository.findOne({
+      where: {
+        username: username,
+      },
+    });
   }
 
   async findUserByAllCredentials(username: string) {

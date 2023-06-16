@@ -32,14 +32,19 @@ export class OffersController {
     @Req() req: UserRequest,
   ) {
     const { id } = req.user;
-    const user = await this.usersService.findOne(id);
-    return await this.offersService.create(createOfferDto, user);
+    try {
+      const user = await this.usersService.findOne(id);
+      return await this.offersService.create(createOfferDto, user);
+    } catch (error) {
+      console.error(error);
+      throw new NotFoundException('пользователь не найден');
+    }
   }
 
   @UseGuards(JwtGuard)
   @Get()
   async getOffers() {
-    const offers = await this.offersService.findOffers();
+    const offers = await this.offersService.findAll();
     if (!offers) {
       throw new NotFoundException('активные зайвки не найдены');
     }

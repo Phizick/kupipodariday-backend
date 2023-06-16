@@ -19,7 +19,6 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsUrl()
-  @Transform(({ value }) => value || 'https://i.pravatar.cc/300')
   avatar: string;
 
   @IsEmail()

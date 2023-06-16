@@ -16,11 +16,11 @@ import { CreateWishlistDto } from './dto/createWishlist.dto';
 import { UpdateWishlistDto } from './dto/updateWishlist.dto';
 import { JwtGuard } from '../guards/jwt.guard';
 import { Wishlist } from './entities/wishlist.entity';
-import { Request } from 'express';
 
-// interface Request {
-//   user?: any;
-// }
+
+interface Request {
+  user?: any;
+}
 
 @UseGuards(JwtGuard)
 @Controller('wishlistlists')

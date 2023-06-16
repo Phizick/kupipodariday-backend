@@ -21,29 +21,33 @@ export class OffersService {
 
   async create(createOfferDto: CreateOfferDto, user: User) {
     try {
-      const wish = await this.wishesService.findOne(createOfferDto.itemId);
+      const wishes = await this.wishesService.findOne(createOfferDto.itemId);
+      const wish = await this.wishesService.findOne(wishes.id);
+      const sum = wish.price - wish.raised;
+      const newRise = Number(wish.raised) + Number(createOfferDto.amount);
 
       if (wish.owner.id === user.id) {
         throw new ForbiddenException(
           'вы не можете вносить деньги на свои подарки',
         );
       }
-
-      const sum = wish.raised + createOfferDto.amount;
-
-      if (sum > wish.price) {
+      if (createOfferDto.amount > wish.price) {
         throw new ForbiddenException('сумма взноса больше стоимости подарка');
+      }
+
+      if (createOfferDto.amount > sum) {
+        throw new ForbiddenException(
+          'сумма взноса больше оставшейся для сбора суммы на подарок',
+        );
       }
 
       if (wish.raised === wish.price) {
         throw new ForbiddenException('нужная сумма уже собрана');
       }
 
-      await this.wishesService.updateByRise(createOfferDto.itemId, sum);
+      await this.wishesService.updateByRise(createOfferDto.itemId, newRise);
       const offerDto = { ...createOfferDto, user: user, item: wish };
-      const offer = await this.offerRepository.save(offerDto);
-
-      return offer;
+      return await this.offerRepository.save(offerDto);
     } catch (error) {
       console.error(error);
       throw new InternalServerErrorException(
@@ -60,7 +64,7 @@ export class OffersService {
     return offer;
   }
 
-  async findOffers(): Promise<Offer[]> {
+  async findAll(): Promise<Offer[]> {
     try {
       return this.offerRepository.find({
         relations: {
@@ -77,7 +81,7 @@ export class OffersService {
       });
     } catch (error) {
       console.error(error);
-      throw new InternalServerErrorException('не удалось получить все офферы');
+      throw new InternalServerErrorException('не удалось получить все заявки');
     }
   }
 }

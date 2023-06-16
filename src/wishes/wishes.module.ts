@@ -16,7 +16,9 @@ export class WishesModule {
   constructor(private readonly configService: ConfigService) {
     const entities = this.configService.get<string[]>('database.entities');
     if (!Array.isArray(entities) || !entities.includes(Wish.name)) {
-      console.error('ошибка при импорте: не найдено в опциях модуля');
+      console.error(
+        'ошибка при импорте: не найдено в опциях модуля, отредактируйте .env добавив DATABASE_ENTITIES',
+      );
     }
   }
 }

@@ -19,8 +19,8 @@ interface UserRequest extends Request {
 @Controller()
 export class AuthController {
   constructor(
-      private usersService: UsersService,
-      private authService: AuthService,
+    private usersService: UsersService,
+    private authService: AuthService,
   ) {}
 
   @HttpCode(200)

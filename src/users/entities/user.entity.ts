@@ -78,7 +78,7 @@ export class User {
   @IsEmail()
   email: string;
 
-  @Column({ select: false })
+  @Column()
   @IsString()
   @MinLength(6, {
     message: 'пароль не может быть меньше 6 символов',

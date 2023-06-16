@@ -1,31 +1,38 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
-import { HashProvider } from '../utils/hashProvider'
+import { HashProvider } from '../utils/hashProvider';
 
 @Injectable()
 export class AuthService {
   constructor(
-      private jwtService: JwtService,
-      private usersService: UsersService,
-      private readonly configService: ConfigService,
+    private jwtService: JwtService,
+    private usersService: UsersService,
+    private readonly configService: ConfigService,
   ) {}
 
   auth(user: User) {
-    const payload = { sub: user.id };
-    const secret = this.configService.get('JWT_KEY');
-    return { access_token: this.jwtService.sign(payload, { secret }) };
+    try {
+      const payload = { sub: user.id };
+      const secret =
+        this.configService.get<string>('JWT_KEY') || 'SOME_JWT_KEY';
+      return { access_token: this.jwtService.sign(payload, { secret }) };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'ошибка сервера при выполнении авторизации',
+      );
+    }
   }
 
   async validatePassword(username: string, password: string) {
     const user = await this.usersService.findUserByName(username);
-    const isPasswordMatching = await HashProvider.validateHash(
-        password,
-        user.password,
+    const isPasswordMatch = await HashProvider.validateHash(
+      password,
+      user.password,
     );
-    if (user && isPasswordMatching) {
+    if (user && isPasswordMatch) {
       return user;
     }
     return null;
