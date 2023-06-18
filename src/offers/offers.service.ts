@@ -20,40 +20,33 @@ export class OffersService {
   ) {}
 
   async create(createOfferDto: CreateOfferDto, user: User) {
-    try {
-      const wishes = await this.wishesService.findOne(createOfferDto.itemId);
-      const wish = await this.wishesService.findOne(wishes.id);
-      const sum = wish.price - wish.raised;
-      const newRise = Number(wish.raised) + Number(createOfferDto.amount);
+    const wishes = await this.wishesService.findOne(createOfferDto.itemId);
+    const wish = await this.wishesService.findOne(wishes.id);
+    const sum = wish.price - wish.raised;
+    const newRise = Number(wish.raised) + Number(createOfferDto.amount);
 
-      if (wish.owner.id === user.id) {
-        throw new ForbiddenException(
-          'вы не можете вносить деньги на свои подарки',
-        );
-      }
-      if (createOfferDto.amount > wish.price) {
-        throw new ForbiddenException('сумма взноса больше стоимости подарка');
-      }
-
-      if (createOfferDto.amount > sum) {
-        throw new ForbiddenException(
-          'сумма взноса больше оставшейся для сбора суммы на подарок',
-        );
-      }
-
-      if (wish.raised === wish.price) {
-        throw new ForbiddenException('нужная сумма уже собрана');
-      }
-
-      await this.wishesService.updateByRise(createOfferDto.itemId, newRise);
-      const offerDto = { ...createOfferDto, user: user, item: wish };
-      return await this.offerRepository.save(offerDto);
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException(
-        `ошибка при создании заявки: ${error.message}`,
+    if (wish.owner.id === user.id) {
+      throw new ForbiddenException(
+        'вы не можете вносить деньги на свои подарки',
       );
     }
+    if (createOfferDto.amount > wish.price) {
+      throw new ForbiddenException('сумма взноса больше стоимости подарка');
+    }
+
+    if (createOfferDto.amount > sum) {
+      throw new ForbiddenException(
+        'сумма взноса больше оставшейся для сбора суммы на подарок',
+      );
+    }
+
+    if (wish.raised === wish.price) {
+      throw new ForbiddenException('нужная сумма уже собрана');
+    }
+
+    await this.wishesService.updateByRise(createOfferDto.itemId, newRise);
+    const offerDto = { ...createOfferDto, user: user, item: wish };
+    return await this.offerRepository.save(offerDto);
   }
 
   async findOne(id: number): Promise<Offer> {

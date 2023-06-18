@@ -19,26 +19,21 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    try {
-      const username = await this.findUserByName(createUserDto.username);
-      const email = await this.findByEmail(createUserDto.email);
-      if (username !== null) {
-        throw new ForbiddenException(
-          'пользователь с таким именем уже существует, придумайте другое',
-        );
-      }
-      if (email) {
-        throw new ForbiddenException(
-          'пользователь с таким e-mail уже существует, используйте другой',
-        );
-      }
-      const user = this.usersRepository.create(createUserDto);
-      user.password = await HashProvider.generateHash(user.password);
-      return await this.usersRepository.save(user);
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('не удалось создать пользователя');
+    const username = await this.findUserByName(createUserDto.username);
+    const email = await this.findByEmail(createUserDto.email);
+    if (username !== null) {
+      throw new ForbiddenException(
+        'пользователь с таким именем уже существует, придумайте другое',
+      );
     }
+    if (email) {
+      throw new ForbiddenException(
+        'пользователь с таким e-mail уже существует, используйте другой',
+      );
+    }
+    const user = this.usersRepository.create(createUserDto);
+    user.password = await HashProvider.generateHash(user.password);
+    return await this.usersRepository.save(user);
   }
 
   async findOne(id: number): Promise<User> {
@@ -61,23 +56,34 @@ export class UsersService {
   async updateOne(id: number, updateUserDto: UpdateUserDto) {
     try {
       if (updateUserDto.password) {
-        const hashedPassword = await HashProvider.generateHash(
+        updateUserDto.password = await HashProvider.generateHash(
           updateUserDto.password,
         );
-        return await this.usersRepository.update(
-          { id },
-          {
-            ...updateUserDto,
-            password: hashedPassword,
-          },
-        );
-      } else {
-        return await this.usersRepository.update({ id }, updateUserDto);
       }
+      if (updateUserDto.username) {
+        const username = await this.findUserByName(updateUserDto.username);
+        if (username !== null && username.id !== id) {
+          throw new ForbiddenException(
+            'пользователь с таким логином уже существует',
+          );
+        }
+      }
+      if (updateUserDto.email) {
+        const email = await this.findByEmail(updateUserDto.email);
+        if (email !== null && email.id !== id) {
+          throw new ForbiddenException(
+            'пользователь с таким email уже сушествует',
+          );
+        }
+      }
+      await this.usersRepository.update({ id }, updateUserDto);
+      const updatedUser = await this.findOne(id);
+      delete updatedUser.password;
+      return updatedUser;
     } catch (error) {
       console.error(error);
       throw new InternalServerErrorException(
-        `нее удалось обновить пользователя с идентификатором ${id}`,
+        'не удалось обновить пользователя.',
       );
     }
   }
@@ -91,21 +97,14 @@ export class UsersService {
   }
 
   async findUserByAllCredentials(username: string) {
-    try {
-      const user = await this.usersRepository.findOne({
-        select: ['id', 'username', 'about', 'avatar', 'createdAt', 'updatedAt'],
-        where: { username },
-      });
-      if (!user) {
-        throw new NotFoundException(`пользователь ${username} не найден`);
-      }
-      return user;
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException(
-        `не удалось получить пользователя ${username}`,
-      );
+    const user = await this.usersRepository.findOne({
+      select: ['id', 'username', 'about', 'avatar', 'createdAt', 'updatedAt'],
+      where: { username },
+    });
+    if (!user) {
+      throw new NotFoundException(`пользователь ${username} не найден`);
     }
+    return user;
   }
 
   async validateJwt(id: number) {
@@ -125,56 +124,42 @@ export class UsersService {
   }
 
   async findAllUsers(query: string) {
-    try {
-      return await this.usersRepository.find({
-        where: [{ username: query }, { email: query }],
-      });
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException(
-        `не удалось получить список пользователей.`,
-      );
-    }
+    return await this.usersRepository.find({
+      where: [{ username: query }, { email: query }],
+    });
   }
 
   async findMyWishes(id: number) {
-    try {
-      const user = await this.usersRepository.findOneBy({ id });
-      if (!user) {
-        throw new NotFoundException(
-          `пользователь с идентификатором ${id} не найден`,
-        );
-      }
+    const user = await this.usersRepository.findOneBy({ id });
+    if (!user) {
+      throw new NotFoundException(
+        `пользователь с идентификатором ${id} не найден`,
+      );
+    }
 
-      const wishes = await this.usersRepository.find({
-        select: ['wishes'],
-        relations: {
-          wishes: {
-            owner: true,
-            offers: {
-              user: {
-                wishes: true,
-                offers: true,
-                wishlists: {
-                  owner: true,
-                  items: true,
-                },
+    const wishes = await this.usersRepository.find({
+      select: ['wishes'],
+      relations: {
+        wishes: {
+          owner: true,
+          offers: {
+            user: {
+              wishes: true,
+              offers: true,
+              wishlists: {
+                owner: true,
+                items: true,
               },
             },
           },
         },
-        where: {
-          id: id,
-        },
-      });
+      },
+      where: {
+        id: id,
+      },
+    });
 
-      const wishesArr = wishes.map((item) => item.wishes);
-      return wishesArr[0];
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException(
-        `не удалось получить список желаний пользователя с идентификатором ${id}`,
-      );
-    }
+    const wishesArr = wishes.map((item) => item.wishes);
+    return wishesArr[0];
   }
 }
