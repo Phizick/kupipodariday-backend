@@ -17,7 +17,6 @@ import { UpdateWishlistDto } from './dto/updateWishlist.dto';
 import { JwtGuard } from '../guards/jwt.guard';
 import { Wishlist } from './entities/wishlist.entity';
 
-
 interface Request {
   user?: any;
 }
